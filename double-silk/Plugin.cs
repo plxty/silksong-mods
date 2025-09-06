@@ -11,12 +11,12 @@ namespace double_silk
     [BepInProcess("Hollow Knight Silksong.exe")]
     public class Plugin : BaseUnityPlugin
     {
-        internal static new ManualLogSource Logger;
-
+        private static float _silkMultiplier = 2;
+        
         private void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(Plugin));
-            Logger = base.Logger;
+            _silkMultiplier = Config.Bind("Cheats", "SilkMultiplier", 2.0f, "The multiplier for generating silk. Note that most fractional values won't work.").Value;
             Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
         }
 
@@ -24,7 +24,7 @@ namespace double_silk
         [HarmonyPrefix]
         private static void AddSilkPrefix(ref int amount, ref bool heroEffect, ref SilkSpool.SilkAddSource source, ref bool forceCanBindEffect)
         {
-            amount *= 2;
+            amount = (int)Math.Round(amount*_silkMultiplier);
         }
     }
 }
