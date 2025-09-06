@@ -1,11 +1,10 @@
 ﻿using System;
 using BepInEx;
 using BepInEx.Logging;
-using double_rosaries;
 using GlobalSettings;
 using HarmonyLib;
 
-namespace double_shards
+namespace double_rosaries
 {
     [BepInPlugin(MyPluginInfo.PLUGIN_GUID, MyPluginInfo.PLUGIN_NAME, MyPluginInfo.PLUGIN_VERSION)]
     [BepInProcess("Hollow Knight Silksong.exe")]
