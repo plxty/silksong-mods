@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "double-shards", "double-sha
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "double-rosaries", "double-rosaries\double-rosaries.csproj", "{C16711F8-92F0-3AB8-FC95-DD2EBE1AF867}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "double-silk", "double-silk\double-silk.csproj", "{FBA54A29-1813-792A-CD11-2BDCCEB8F6D3}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{C16711F8-92F0-3AB8-FC95-DD2EBE1AF867}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C16711F8-92F0-3AB8-FC95-DD2EBE1AF867}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C16711F8-92F0-3AB8-FC95-DD2EBE1AF867}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FBA54A29-1813-792A-CD11-2BDCCEB8F6D3}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FBA54A29-1813-792A-CD11-2BDCCEB8F6D3}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FBA54A29-1813-792A-CD11-2BDCCEB8F6D3}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FBA54A29-1813-792A-CD11-2BDCCEB8F6D3}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
