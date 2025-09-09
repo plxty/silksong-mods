@@ -10,13 +10,13 @@ namespace double_shards
     public class Plugin : BaseUnityPlugin
     {
         private static int _shardsMultiplier;
-        private static int _damageMultiplier;
+        private static int _rosariesMultiplier;
 
         private void Awake()
         {
             Harmony.CreateAndPatchAll(typeof(Plugin));
             _shardsMultiplier = Config.Bind("Cheats", "ShardsMultiplier", 3, "The multiplier for collecting shards.").Value;
-            _damageMultiplier = Config.Bind("Cheats", "DamageMultiplier", 2, "The multiplier for damage.").Value;
+            _rosariesMultiplier = Config.Bind("Cheats", "RosariesMultiplier", 2, "The multiplier for collecting rosaries.").Value;
             Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
             // To speed up reflection while gaming, accessing private field at the first time is too costy:
@@ -47,14 +47,11 @@ namespace double_shards
             var largeSmoothGeoDrops = traverse.Field<int>("largeSmoothGeoDrops");
             var shellShardDrops = traverse.Field<int>("shellShardDrops");
 
-            // More shard now:
-            shellShardDrops.Value *= _shardsMultiplier;
-
             // More rosaries, for largeSmoothGeo, it's "bound" to largeGeo:
             int geoCount = smallGeoDrops.Value + mediumGeoDrops.Value + largeGeoDrops.Value + largeSmoothGeoDrops.Value;
             if (geoCount == 0)
             {
-                geoCount = shellShardDrops.Value;
+                geoCount = shellShardDrops.Value * _rosariesMultiplier;
                 smallGeoDrops.Value = (geoCount % 15) % 10;
                 mediumGeoDrops.Value = (geoCount % 15) / 10;
                 largeGeoDrops.Value = geoCount / 15;
@@ -62,12 +59,15 @@ namespace double_shards
             }
             else
             {
-                smallGeoDrops.Value *= _shardsMultiplier;
-                mediumGeoDrops.Value *= _shardsMultiplier;
-                largeGeoDrops.Value *= _shardsMultiplier;
-                largeSmoothGeoDrops.Value *= _shardsMultiplier;
+                smallGeoDrops.Value *= _rosariesMultiplier;
+                mediumGeoDrops.Value *= _rosariesMultiplier;
+                largeGeoDrops.Value *= _rosariesMultiplier;
+                largeSmoothGeoDrops.Value *= _rosariesMultiplier;
                 Debug.Log("Rosaries and shards multiplied");
             }
+
+            // More shard now:
+            shellShardDrops.Value *= _shardsMultiplier;
         }
 
         [HarmonyPatch(typeof(HealthManager), "TrySteal")]
@@ -80,31 +80,6 @@ namespace double_shards
             stolenShards *= _shardsMultiplier;
             flingShards *= _shardsMultiplier;
             Debug.Log("Stealing geo and shards");
-        }
-
-        [HarmonyPatch(typeof(HeroController), "TakeDamage")]
-        [HarmonyPrefix]
-        private static void HeroControllerTakeDamage(HeroController __instance, GameObject go, CollisionSide damageSide, int damageAmount, ref HazardType hazardType, DamagePropertyFlags damagePropertyFlags)
-        {
-            // From enemy, check TakeDamageFromDamager (CheckForDamage). TODO: Won't work for BOSS?
-            // FIXME: damangePropertyFlags check?
-            if (hazardType == HazardType.LAVA || hazardType == HazardType.STEAM)
-            {
-                Debug.Log($"Reducing hazard {hazardType} from {damageAmount} to 1 damage");
-                hazardType = HazardType.SPIKES;
-            }
-        }
-
-        [HarmonyPatch(typeof(HealthManager), "TakeDamage")]
-        [HarmonyPrefix]
-        private static void HealthManagerTakeDamage(HealthManager __instance, ref HitInstance hitInstance)
-        {
-            // Ignore environmental:
-            if (!hitInstance.IsHeroDamage)
-                return;
-
-            hitInstance.DamageDealt *= _damageMultiplier;
-            Debug.Log($"Hit {hitInstance.DamageDealt} damage");
         }
 
         [HarmonyPatch(typeof(ToolItemManager), "IsToolEquipped", [typeof(string)])]
