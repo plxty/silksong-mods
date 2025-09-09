@@ -20,22 +20,24 @@ namespace double_shards
             Logger.LogInfo($"Plugin {MyPluginInfo.PLUGIN_GUID} is loaded!");
 
             // To speed up reflection while gaming, accessing private field at the first time is too costy:
-            var traverse = Traverse.Create(new HealthManager());
-            _ = traverse.Field<int>("smallGeoDrops");
-            _ = traverse.Field<int>("mediumGeoDrops");
-            _ = traverse.Field<int>("largeGeoDrops");
-            _ = traverse.Field<int>("largeSmoothGeoDrops");
-            _ = traverse.Field<int>("shellShardDrops");
+            var healthManagerTraverse = Traverse.Create(typeof(HealthManager));
+            _ = healthManagerTraverse.Field<int>("smallGeoDrops");
+            _ = healthManagerTraverse.Field<int>("mediumGeoDrops");
+            _ = healthManagerTraverse.Field<int>("largeGeoDrops");
+            _ = healthManagerTraverse.Field<int>("largeSmoothGeoDrops");
+            _ = healthManagerTraverse.Field<int>("shellShardDrops");
+            var currencyObjectBaseTraverse = Traverse.Create(typeof(CurrencyObjectBase));
+            _ = currencyObjectBaseTraverse.Field<bool>("isAttracted");
         }
+
+        private static bool _isMagnetEquipped = false;
 
         [HarmonyPatch(typeof(HealthManager), "Die", [typeof(float?), typeof(AttackTypes), typeof(NailElements), typeof(GameObject), typeof(bool), typeof(float), typeof(bool), typeof(bool)])]
         [HarmonyPrefix]
-        private static void HealthManagerDiePrefix(ref HealthManager __instance, float? attackDirection, AttackTypes attackType, NailElements nailElement, GameObject damageSource, bool ignoreEvasion, float corpseFlingMultiplier, bool overrideSpecialDeath, bool disallowDropFling)
+        private static void HealthManagerDiePrefix(HealthManager __instance, float? attackDirection, AttackTypes attackType, NailElements nailElement, GameObject damageSource, bool ignoreEvasion, float corpseFlingMultiplier, bool overrideSpecialDeath, bool disallowDropFling)
         {
             if (__instance.EnemyType != HealthManager.EnemyTypes.Regular)
-            {
                 return;
-            }
 
             // Team cherry won't call Die twice on the same GameObject, do they?
             var traverse = Traverse.Create(__instance);
@@ -84,10 +86,11 @@ namespace double_shards
         [HarmonyPrefix]
         private static void HeroControllerTakeDamage(HeroController __instance, GameObject go, CollisionSide damageSide, int damageAmount, ref HazardType hazardType, DamagePropertyFlags damagePropertyFlags)
         {
-            // From enemy, check TakeDamageFromDamager (CheckForDamage).
+            // From enemy, check TakeDamageFromDamager (CheckForDamage). TODO: Won't work for BOSS?
+            // FIXME: damangePropertyFlags check?
             if (hazardType == HazardType.LAVA || hazardType == HazardType.STEAM)
             {
-                Debug.Log($"Reducing hazard {hazardType} to 1 damage");
+                Debug.Log($"Reducing hazard {hazardType} from {damageAmount} to 1 damage");
                 hazardType = HazardType.SPIKES;
             }
         }
@@ -96,6 +99,10 @@ namespace double_shards
         [HarmonyPrefix]
         private static void HealthManagerTakeDamage(HealthManager __instance, ref HitInstance hitInstance)
         {
+            // Ignore environmental:
+            if (!hitInstance.IsHeroDamage)
+                return;
+
             hitInstance.DamageDealt *= _damageMultiplier;
             Debug.Log($"Hit {hitInstance.DamageDealt} damage");
         }
@@ -106,15 +113,24 @@ namespace double_shards
         {
             // Match with the original function:
             if (CollectableItemManager.IsInHiddenMode())
-            {
                 return;
-            }
 
             if (name == "Compass")
-            {
                 __result = true;
+            else if (name == "Rosary Magnet")
+                _isMagnetEquipped = __result;
+            if (__result)
                 Debug.Log($"Equipment {name} selected");
-            }
+        }
+
+        [HarmonyPatch(typeof(CurrencyObjectBase), "Land")]
+        [HarmonyPostfix]
+        private static void CurrencyObjectBaseLandPostfix(CurrencyObjectBase __instance)
+        {
+            // TODO: Cleaner way to detect if magent enabled? For shard, it seems it's always off.
+            if (!_isMagnetEquipped)
+                return;
+            Traverse.Create(__instance).Field<bool>("isAttracted").Value = true;
         }
     }
 }
